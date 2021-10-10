@@ -22,6 +22,13 @@ fun OkHttpClient.get(url: String): Request.Builder {
         .get()
 }
 
+fun OkHttpClient.delete(url: String): Request.Builder {
+    return Request.Builder()
+        .url(url)
+        .delete()
+}
+
+
 fun OkHttpClient.post(url: String, body: RequestBody): Request.Builder {
     return Request.Builder()
         .url(url)
