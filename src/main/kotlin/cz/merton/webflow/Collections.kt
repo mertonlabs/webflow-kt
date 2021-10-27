@@ -75,9 +75,9 @@ class Collections(
             val request = webflow.client.get("${Webflow.ApiBase}/sites/$siteId/collections").build()
             val response = webflow.client.execute(request)
             if (response.isSuccessful) {
-                mapper.readValue(response.body?.string() ?: "[]")
+                mapper.readValue(response.body()?.string() ?: "[]")
             } else {
-                logger.severe("Request failed: $response | ${response.body?.string()})")
+                logger.severe("Request failed: $response | ${response.body()?.string()})")
                 emptyList()
             }
         } catch (e: Exception) {
@@ -90,10 +90,10 @@ class Collections(
         return try {
             val request = webflow.client.get("${Webflow.ApiBase}/collections/$collectionId").build()
             val response = webflow.client.execute(request)
-            if (response.isSuccessful && response.body != null) {
-                mapper.readValue(response.body!!.string())
+            if (response.isSuccessful && response.body() != null) {
+                mapper.readValue(response.body()!!.string())
             } else {
-                logger.severe("Request failed: $response | ${response.body?.string()})")
+                logger.severe("Request failed: $response | ${response.body()?.string()})")
                 null
             }
         } catch (e: Exception) {

@@ -23,6 +23,7 @@ class Webflow(private val apiToken: String) {
                 .newBuilder()
                 .header("Authorization", "Bearer $apiToken")
                 .header("accept-version", "1.0.0")
+                .header("Content-Type", "application/json")
                 .build()
             chain.proceed(request)
         }.build()
