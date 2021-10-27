@@ -11,6 +11,7 @@ import com.fasterxml.jackson.annotation.JsonAnySetter
 import com.fasterxml.jackson.annotation.JsonIgnore
 import com.fasterxml.jackson.annotation.JsonProperty
 import com.fasterxml.jackson.module.kotlin.readValue
+import cz.merton.webflow.util.delete
 import cz.merton.webflow.util.execute
 import cz.merton.webflow.util.get
 import java.util.logging.Logger
@@ -27,10 +28,10 @@ data class ItemSet(
 data class Item(
     @JsonProperty("_archived") val archived: Boolean,
     @JsonProperty("_draft") val draft: Boolean,
-    @JsonProperty("_id") val id: String,
-    @JsonProperty("_cid") val cid: String,
-    @JsonProperty("name") val name: String,
-    @JsonProperty("slug") val slug: String,
+    @JsonProperty("_id") val id: String?,
+    @JsonProperty("_cid") val cid: String?,
+    @JsonProperty("name") val name: String?,
+    @JsonProperty("slug") val slug: String?,
     @JsonIgnore @JsonAnyGetter @JsonAnySetter val fields: MutableMap<String, Any> = mutableMapOf()
 )
 
@@ -42,15 +43,48 @@ class Items(private val webflow: Webflow, private val collectionId: String) {
     private val mapper = webflow.defaultMapper()
 
     @Throws(WebflowException::class)
-    fun items(): ItemSet? {
+    fun list(): ItemSet? {
         return try {
             val request = webflow.client.get("${Webflow.ApiBase}/collections/${collectionId}/items").build()
             val response = webflow.client.execute(request)
             if (response.isSuccessful) {
-                mapper.readValue(response.body?.string() ?: "{}")
+                mapper.readValue(response.body()?.string() ?: "{}")
             } else {
-                logger.severe("Request failed: $response | ${response.body?.string()})")
+                logger.severe("Request failed: $response | ${response.body()?.string()})")
                 null
+            }
+        } catch (e: Exception) {
+            throw WebflowException("An exception occurred.", e)
+        }
+    }
+
+    @Throws(WebflowException::class)
+    fun get(itemId: String): Item? {
+        return try {
+            val request = webflow.client.get("${Webflow.ApiBase}/collections/$collectionId/items/$itemId").build()
+            val response = webflow.client.execute(request)
+            if (response.isSuccessful) {
+                mapper.readValue(response.body()?.string() ?: "{}")
+            } else {
+                logger.severe("Request failed: $response | ${response.body()?.string()})")
+                null
+            }
+        } catch (e: Exception) {
+            throw WebflowException("An exception occurred.", e)
+        }
+    }
+
+    @Throws(WebflowException::class)
+    fun delete(itemId: String): Boolean {
+        return try {
+            val request = webflow.client.delete("${Webflow.ApiBase}/collections/$collectionId/items/$itemId").build()
+            val response = webflow.client.execute(request)
+            if (response.isSuccessful) {
+                val body: Map<String, Int> = mapper.readValue(response.body()?.string() ?: "{}")
+                body.containsKey("deleted") && body["deleted"]!! >= 0
+            } else {
+                logger.severe("Request failed: $response | ${response.body()?.string()})")
+                false
             }
         } catch (e: Exception) {
             throw WebflowException("An exception occurred.", e)

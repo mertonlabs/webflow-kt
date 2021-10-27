@@ -11,11 +11,10 @@ import com.fasterxml.jackson.module.kotlin.readValue
 import cz.merton.webflow.util.execute
 import cz.merton.webflow.util.get
 import cz.merton.webflow.util.post
-import okhttp3.MediaType.Companion.toMediaType
-import okhttp3.RequestBody.Companion.toRequestBody
+import okhttp3.MediaType
+import okhttp3.RequestBody
 import java.time.ZonedDateTime
 import java.util.logging.Logger
-import kotlin.jvm.Throws
 
 data class Site(
     @JsonProperty("_id") val id: String,
@@ -41,9 +40,9 @@ class Sites(private val webflow: Webflow) {
             val request = webflow.client.get("${Webflow.ApiBase}/sites").build()
             val response = webflow.client.execute(request)
             if (response.isSuccessful) {
-                mapper.readValue(response.body?.string() ?: "[]")
+                mapper.readValue(response.body()?.string() ?: "[]")
             } else {
-                logger.severe("Request failed: $response | ${response.body?.string()})")
+                logger.severe("Request failed: $response | ${response.body()?.string()})")
                 emptyList()
             }
         } catch (e: Exception) {
@@ -56,10 +55,10 @@ class Sites(private val webflow: Webflow) {
         return try {
             val request = webflow.client.get("${Webflow.ApiBase}/sites/$siteId").build()
             val response = webflow.client.execute(request)
-            if (response.isSuccessful && response.body != null) {
-                mapper.readValue(response.body!!.string())
+            if (response.isSuccessful && response.body() != null) {
+                mapper.readValue(response.body()!!.string())
             } else {
-                logger.severe("Request failed: $response | ${response.body?.string()})")
+                logger.severe("Request failed: $response | ${response.body()?.string()})")
                 null
             }
         } catch (e: Exception) {
@@ -70,8 +69,7 @@ class Sites(private val webflow: Webflow) {
     @Throws(WebflowException::class)
     fun publish(siteId: String, domains: List<String>): List<Site> {
         try {
-            val requestBody = mapper.writeValueAsString(mapOf("domains" to domains))
-                .toRequestBody("application/json".toMediaType())
+            val requestBody = RequestBody.create(MediaType.get("application/json"), mapper.writeValueAsString(mapOf("domains" to domains)))
             val request = webflow.client.post(
                 url = "${Webflow.ApiBase}/sites/$siteId/publish",
                 body = requestBody
@@ -79,9 +77,9 @@ class Sites(private val webflow: Webflow) {
 
             val response = webflow.client.execute(request)
             if (response.isSuccessful) {
-                return mapper.readValue(response.body?.string() ?: "[]")
+                return mapper.readValue(response.body()?.string() ?: "[]")
             }
-            logger.severe("Request failed: $response | ${response.body?.string()})")
+            logger.severe("Request failed: $response | ${response.body()?.string()})")
             return emptyList()
         } catch (e: Exception) {
             throw WebflowException("An exception occurred.", e)
